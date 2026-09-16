@@ -344,7 +344,7 @@ function parseBody(body, githubUser){
 
   const name = (nameMatch && nameMatch[1] && nameMatch[1].trim()) || `@${githubUser}`;
   const deadline = deadlineMatch ? new Date(deadlineMatch[1] + "T00:00:00") : null;
-  let details = (detailsMatch && detailsMatch[1] || "").trim();
+let details = (detailsMatch && detailsMatch[1] || "").trim();
 
   // Første vedhæftede billede eller fil, hvis kollegaen trak en ind i tekstboksen
   const imgMatch = raw.match(/!\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/);
@@ -352,8 +352,10 @@ function parseBody(body, githubUser){
   let file = null;
   if (imgMatch){
     file = { url: imgMatch[1], name: "vedhæftet billede", isImage: true };
+    details = details.replace(imgMatch[0], "").trim();
   } else if (fileMatch){
     file = { url: fileMatch[2], name: fileMatch[1], isImage: false };
+    details = details.replace(fileMatch[0], "").trim();
   }
 
   return { name, deadline, details, file };
