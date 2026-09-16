@@ -435,8 +435,8 @@ function buildExportText(open, done){
 let currentOpen = [], currentDone = [];
 
 function render(issues){
-  currentOpen = issues.filter(i => i.state === "open").sort(compareOpen);
-  currentDone = issues.filter(i => i.state !== "open")
+  currentOpen = issues.filter(i => !i.done).sort(compareOpen);
+  currentDone = issues.filter(i => i.done)
     .sort((a, b) => (b.doneAt || b.created) - (a.doneAt || a.created));
 
   const overdueCount = currentOpen.filter(i => deadlineInfo(i)?.isOverdue).length;
