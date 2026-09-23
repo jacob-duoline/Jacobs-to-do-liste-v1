@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jacob's to do liste</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231e3a6e'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%232ab6d9' font-family='sans-serif'%3E%E2%9A%92%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef1f6;
+    --surface:#ffffff;
+    --border:#dfe4ed;
+    --text:#1a2233;
+    --muted:#66738a;
+    --navy:#1e3a6e;
+    --navy-deep:#132853;
+    --cyan:#1fb1cf;
+    --cyan-ink:#0d6f82;
+    --cyan-soft:#e4f6f9;
+    --overdue:#c1452c;
+    --overdue-bg:#fbe8e4;
+    --soon:#b3760f;
+    --soon-bg:#faf1dc;
+    --ok-accent:#c7cedb;
+    --shadow:0 1px 2px rgba(19,40,83,.06);
+    --shadow-lift:0 10px 24px rgba(19,40,83,.16);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e1420;
+      --surface:#161f30;
+      --border:#293449;
+      --text:#e8ecf4;
+      --muted:#8f9db6;
+      --navy:#4d76c4;
+      --navy-deep:#0b1a38;
+      --cyan:#3fd0ea;
+      --cyan-ink:#a7ecf7;
+      --cyan-soft:#122a33;
+      --overdue:#ff9179;
+      --overdue-bg:#3a2019;
+      --soon:#f2bd6b;
+      --soon-bg:#3a2e15;
+      --ok-accent:#3a4763;
+      --shadow:0 1px 2px rgba(0,0,0,.3);
+      --shadow-lift:0 14px 30px rgba(0,0,0,.45);
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", system-ui, -apple-system, Segoe UI, sans-serif;
+    padding:28px 18px 64px;
+    line-height:1.45;
+  }
+  .wrap{max-width:740px;margin:0 auto;}
+
+  .hero{
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(135deg, var(--navy) 0%, var(--navy-deep) 100%);
+    border-radius:18px;
+    padding:26px 26px 22px;
+    color:#fff;
+    margin-bottom:20px;
+    box-shadow:var(--shadow-lift);
+  }
+  .hero::after{
+    content:"";
+    position:absolute;
+    right:-60px; top:-60px;
+    width:220px; height:220px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(63,208,234,.35), rgba(63,208,234,0) 70%);
+  }
+  .hero-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    position:relative;
+    z-index:1;
+  }
+  h1{
+    font-size:1.55rem;
+    font-weight:700;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  .sub{color:#c7d7f0;font-size:0.92rem;margin:0;max-width:44ch;}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;position:relative;z-index:1;}
+  .stat-chip{
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:999px;
+    padding:6px 13px;
+    font-size:0.8rem;
+    font-weight:500;
+    color:#eef4ff;
+    display:flex;align-items:center;gap:6px;
+  }
+  .stat-chip strong{font-family:"IBM Plex Mono", monospace;font-variant-numeric:tabular-nums;}
+  .stat-chip.warn{background:rgba(255,145,121,.18);border-color:rgba(255,145,121,.35);}
+
+  .btn{
+    font:inherit;font-weight:600;border-radius:10px;border:none;cursor:pointer;
+    transition:transform .16s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, background .2s ease, color .2s ease;
+    text-decoration:none;display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn:active{transform:scale(.95);}
+  .new-btn{
+    position:relative;z-index:1;
+    background:linear-gradient(135deg, var(--cyan) 0%, var(--cyan-ink) 100%);
+    color:#04303a;font-size:0.92rem;padding:11px 18px;
+    box-shadow:0 4px 14px rgba(31,177,207,.35);white-space:nowrap;
+  }
+  .new-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(31,177,207,.45);}
+  .refresh-btn{
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.28);
+    color:#eef4ff;font-size:0.8rem;padding:6px 12px;
+  }
+  .refresh-btn:hover{background:rgba(255,255,255,.2);}
+  .refresh-btn .spin{display:inline-block;}
+  .refresh-btn.loading .spin{animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  section h2{
+    font-size:0.78rem;text-transform:uppercase;letter-spacing:0.07em;
+    color:var(--muted);margin:22px 0 10px;
+  }
+  #list, #done-list{display:flex;flex-direction:column;gap:11px;}
+
+  .card{
+    position:relative;background:var(--surface);border:1px solid var(--border);
+    border-left:4px solid var(--ok-accent);border-radius:12px;
+    padding:15px 18px 15px 16px;display:flex;flex-direction:column;gap:8px;
+    box-shadow:var(--shadow);transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift);}
+  .card.accent-soon{border-left-color:var(--soon);}
+  .card.accent-overdue{border-left-color:var(--overdue);}
+  .card.is-done{opacity:0.6;}
+  .card.is-done .card-title{text-decoration:line-through;}
+  .card-title{font-size:1.02rem;font-weight:600;margin:0;}
+  .card-title a{color:inherit;text-decoration:none;}
+  .card-title a:hover{color:var(--cyan-ink);text-decoration:underline;}
+  .meta{
+    display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;
+    font-size:0.82rem;color:var(--muted);
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-variant-numeric:tabular-nums;
+  }
+  .badge{
+    font-family:"IBM Plex Sans", sans-serif;font-weight:600;font-size:0.78rem;
+    padding:2px 9px;border-radius:999px;background:var(--bg);color:var(--muted);
+  }
+  .badge.overdue{background:var(--overdue-bg);color:var(--overdue);}
+  .badge.soon{background:var(--soon-bg);color:var(--soon);}
+  .row-actions{display:flex;gap:14px;align-items:center;margin-top:2px;flex-wrap:wrap;}
+  .done-btn{
+    font-size:0.85rem;padding:7px 13px;background:transparent;
+    color:var(--cyan-ink);border:1.5px solid var(--cyan);
+  }
+  .done-btn:hover{background:var(--cyan);color:#04303a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(31,177,207,.3);}
+  .reopen-btn{
+    font-size:0.85rem;padding:7px 13px;background:transparent;
+    color:var(--muted);border:1.5px solid var(--ok-accent);
+  }
+  .reopen-btn:hover{background:var(--ok-accent);color:var(--text);transform:translateY(-1px);box-shadow:0 4px 12px rgba(19,40,83,.12);}
+
+  .detail-toggle{
+    font-size:0.82rem;font-weight:600;color:var(--muted);
+    background:none;border:none;cursor:pointer;
+    display:inline-flex;align-items:center;gap:5px;padding:2px 0;
+  }
+  .detail-toggle:hover{color:var(--cyan-ink);}
+  .detail-toggle .chev{transition:transform .18s ease;display:inline-block;}
+  .detail-toggle[aria-expanded="true"] .chev{transform:rotate(90deg);}
+  .detail-body{overflow:hidden;max-height:0;transition:max-height .22s ease;}
+  .detail-inner{padding-top:10px;display:flex;flex-direction:column;gap:10px;}
+  .detail-text{font-size:0.9rem;color:var(--text);white-space:pre-wrap;}
+  .detail-file{
+    display:flex;align-items:center;gap:10px;background:var(--bg);
+    border:1px solid var(--border);border-radius:10px;padding:7px 10px;
+    color:var(--text);text-decoration:none;max-width:320px;
+  }
+  .detail-file:hover{border-color:var(--cyan);}
+  .detail-file img{width:56px;height:56px;object-fit:cover;border-radius:6px;}
+  .detail-file .file-ic{
+    width:34px;height:34px;border-radius:6px;background:var(--cyan-soft);color:var(--cyan-ink);
+    display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;flex-shrink:0;
+  }
+  .detail-file .fn{font-size:0.83rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  .empty, .error{
+    text-align:center;padding:32px 20px;color:var(--muted);
+    background:var(--surface);border:1px dashed var(--border);border-radius:12px;font-size:0.9rem;
+  }
+  .error a{color:var(--cyan-ink);}
+  details.done-details{margin-top:8px;}
+  summary{cursor:pointer;color:var(--muted);font-size:0.85rem;}
+  summary:hover{color:var(--cyan-ink);}
+
+  .export-section{
+    margin-top:28px;padding-top:20px;border-top:1px dashed var(--border);
+    display:flex;justify-content:center;
+  }
+  .export-btn{
+    background:var(--surface);border:1.5px solid var(--navy);color:var(--navy);
+    font-size:0.9rem;padding:10px 18px;
+  }
+  .export-btn:hover{background:var(--navy);color:#fff;transform:translateY(-2px);box-shadow:var(--shadow-lift);}
+  #export-panel{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:16px 18px 18px;margin-top:16px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;gap:12px;
+  }
+  #export-panel[hidden]{display:none;}
+  .export-head strong{font-size:1rem;color:var(--navy);}
+  .hint{font-size:0.78rem;color:var(--muted);margin:2px 0 0;}
+  #export-text{
+    width:100%;min-height:180px;max-height:360px;resize:vertical;
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:0.8rem;line-height:1.5;
+    padding:12px;border:1px solid var(--border);border-radius:10px;
+    background:var(--bg);color:var(--text);
+  }
+  #export-text:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-soft);}
+  .export-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+  .export-actions .btn{
+    font-size:0.88rem;padding:9px 15px;background:var(--bg);color:var(--text);border:1px solid var(--border);
+  }
+  .export-actions .btn:hover{border-color:var(--cyan);color:var(--cyan-ink);}
+  .export-actions .btn.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .export-actions .btn.primary:hover{background:var(--navy-deep);box-shadow:0 6px 16px rgba(30,58,110,.35);transform:translateY(-1px);}
+
+  @media (prefers-reduced-motion: reduce){
+    .btn, .card, .done-btn, .new-btn, .detail-body, .detail-toggle .chev, .refresh-btn .spin{
+      transition:none !important;animation:none !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <h1>Jacob's to do liste</h1>
+        <p class="sub">Åbne anmodninger om 3D-print, modellering og andet, som kolleger har bedt om.</p>
+      </div>
+      <a class="btn new-btn" id="new-link" href="#" target="_blank" rel="noopener">+ Ny anmodning</a>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div id="status" style="color:var(--muted);font-size:0.9rem;padding:24px 0;">Henter åbne anmodninger …</div>
+
+  <div id="content" hidden>
+    <section>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2 style="margin:22px 0 10px;">Åbne anmodninger</h2>
+        <button type="button" class="btn refresh-btn" id="refresh-btn"><span class="spin">↻</span> Opdatér</button>
+      </div>
+      <div id="list"></div>
+    </section>
+
+    <details class="done-details">
+      <summary id="done-summary">Færdige (0)</summary>
+      <div id="done-list" style="margin-top:10px;"></div>
+    </details>
+
+    <div class="export-section">
+      <button class="btn export-btn" id="toggle-export" aria-expanded="false">⇪ Eksportér build tracker</button>
+    </div>
+
+    <div id="export-panel" hidden>
+      <div class="export-head">
+        <strong>Build tracker</strong>
+        <p class="hint">Kopiér teksten og sæt den ind i en chat med Claude, så den kan huske jeres kø og hjælpe med at pege på den næste opgave.</p>
+      </div>
+      <textarea id="export-text" readonly spellcheck="false"></textarea>
+      <div class="export-actions">
+        <button type="button" class="btn" id="close-export">Luk</button>
+        <button type="button" class="btn" id="save-export">Gem som fil</button>
+        <button type="button" class="btn primary" id="copy-export">Kopiér tekst</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Udfyld disse to før siden lægges på GitHub Pages ---
+const OWNER = "jacob-duoline";   // dit GitHub-brugernavn
+const REPO  = "Jacobs-to-do-liste-v1";   // navnet på dit repository
+// ----------------------------------------------------------
+
+const statusEl = document.getElementById("status");
+const contentEl = document.getElementById("content");
+const listEl = document.getElementById("list");
+const doneListEl = document.getElementById("done-list");
+const doneSummary = document.getElementById("done-summary");
+const statsEl = document.getElementById("stats");
+const newLink = document.getElementById("new-link");
+const refreshBtn = document.getElementById("refresh-btn");
+
+const repoUrl = `https://github.com/${OWNER}/${REPO}`;
+newLink.href = `${repoUrl}/issues/new?template=anmodning.md`;
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str == null ? "" : String(str);
+  return div.innerHTML;
+}
+// escapeHtml() (via textContent/innerHTML) escaper KUN &, < og > — browseren undlader
+// bevidst at escape anførselstegn i tekstindhold, fordi de ikke betyder noget der.
+// Men et anførselstegn i en href/src-attributværdi KAN bryde ud af attributten og
+// indsætte ny HTML/JS. Brug altid escapeAttr() (ikke escapeHtml()) til href/src.
+function escapeAttr(str){
+  return String(str == null ? "" : str)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+function formatDate(d){
+  return d.toLocaleDateString("da-DK", { day: "2-digit", month: "short", year: "numeric" });
+}
+function daysAgoLabel(d){
+  const diff = Math.floor((Date.now() - d) / 86400000);
+  if (diff <= 0) return "i dag";
+  if (diff === 1) return "i går";
+  return `for ${diff} dage siden`;
+}
+function deadlineInfo(it){
+  if (!it.deadline) return null;
+  const isOverdue = it.deadline < new Date(new Date().toDateString());
+  const soon = !isOverdue && (it.deadline - Date.now()) < 86400000 * 3;
+  return { isOverdue, soon };
+}
+function compareOpen(a, b){
+  if (a.deadline && b.deadline) return a.deadline - b.deadline;
+  if (a.deadline) return -1;
+  if (b.deadline) return 1;
+  return a.created - b.created;
+}
+
+// Mange kolleger følger ikke skabelonens **fed**-overskrifter, men skriver i stedet frit:
+// navn på egen linje, en dato på egen linje (fx "25-09-26" eller "2026-09-25"), og resten
+// som beskrivelse. parseFreeform() gætter ud fra den konvention, når de rigtige
+// skabelon-overskrifter slet ikke findes i teksten.
+function parseFreeform(raw){
+  const lines = raw.split("\n").map(l => l.trim());
+  const nonEmpty = lines.map((l, i) => ({ l, i })).filter(o => o.l.length > 0);
+  const head = nonEmpty.slice(0, 2); // navn og dato optræder i praksis i de to første linjer
+
+  const dateLineRe = /^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{2}|\d{4})$/;   // fx 25-09-26 eller 25-09-2026
+  const isoDateRe = /^(\d{4})-(\d{2})-(\d{2})$/;                          // fx 2026-09-25
+  const nameLikeRe = /^[\p{L}][\p{L}'\-. ]{0,29}$/u;                      // kort, kun bogstaver — ikke en hel sætning
+
+  let deadline = null, dateLineIdx = -1;
+  for (const { l, i } of head){
+    let m = l.match(dateLineRe);
+    if (m){
+      let [, d, mo, y] = m;
+      if (y.length === 2) y = "20" + y;
+      const dt = new Date(`${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}T00:00:00`);
+      if (!isNaN(dt)){ deadline = dt; dateLineIdx = i; break; }
+    }
+    m = l.match(isoDateRe);
+    if (m){
+      const dt = new Date(l + "T00:00:00");
+      if (!isNaN(dt)){ deadline = dt; dateLineIdx = i; break; }
+    }
+  }
+
+  let name = null, nameLineIdx = -1;
+  for (const { l, i } of head){
+    if (i === dateLineIdx) continue;
+    const cleaned = l.replace(/:\s*$/, ""); // tillad "Kristian:" ligesom "Kristian"
+    if (nameLikeRe.test(cleaned) && cleaned.split(/\s+/).length <= 4){
+      name = cleaned;
+      nameLineIdx = i;
+      break;
+    }
+  }
+
+  const details = lines
+    .filter((l, i) => i !== nameLineIdx && i !== dateLineIdx)
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return { name, deadline, details };
+}
+
+// Udtrækker "Dit navn:", "Ønsket frist (valgfri):" og "Yderligere detaljer (valgfri):"
+// fra issue-teksten, som skabelonen .github/ISSUE_TEMPLATE/anmodning.md beder om — eller,
+// hvis kollegaen ikke har brugt skabelonens overskrifter, gætter ud fra frit skrevet tekst.
+function parseBody(body, githubUser){
+  const raw = body || "";
+  const usesTemplate = /\*\*Dit navn:?\*\*/i.test(raw);
+
+  let name, deadline, details;
+  if (usesTemplate){
+    const nameMatch = raw.match(/\*\*Dit navn:?\*\*\s*\n?([^\n*][^\n]*)?/i);
+    const deadlineMatch = raw.match(/\*\*Ønsket frist[^*]*\*\*\s*\n?\s*(\d{4}-\d{2}-\d{2})/i);
+    const detailsMatch = raw.match(/\*\*Yderligere detaljer[^*]*\*\*\s*\n?([\s\S]*?)(?:\n\*\*|<!--|$)/i);
+    name = nameMatch && nameMatch[1] && nameMatch[1].trim();
+    deadline = deadlineMatch ? new Date(deadlineMatch[1] + "T00:00:00") : null;
+    details = (detailsMatch && detailsMatch[1] || "").trim();
+  } else {
+    const ff = parseFreeform(raw);
+    name = ff.name;
+    deadline = ff.deadline;
+    details = ff.details;
+  }
+  name = name || `@${githubUser}`;
+  // Uanset kilde skal navnet være kort og rent — aldrig hele issue-teksten ved et uheld.
+  name = String(name).slice(0, 80).trim() || `@${githubUser}`;
+  if (details.length > 20000) details = details.slice(0, 20000) + "…"; // værn mod ekstremt lange/fejlagtige indsættelser
+
+  // Alle vedhæftede billeder/filer, hvis kollegaen trak en eller flere ind i tekstboksen.
+  // GitHub sætter denne markdown-syntax direkte ind i tekstfeltet der hvor kollegaen
+  // trak filen — ofte inde i selve "Yderligere detaljer"-svaret, uden noget "**" eller
+  // "<!--" bagefter til at afgrænse det. Uden dette ville den rå [navn](url)-syntax
+  // stå dobbelt: både som ren tekst og som en pæn fil-chip. "!" foran betyder billede.
+  const attachmentRe = /(!)?\[([^\]]*)\]\((https?:\/\/[^\s")<>]+)\)/g;
+  const files = [];
+  for (const m of raw.matchAll(attachmentRe)){
+    const isImage = !!m[1];
+    files.push({
+      url: m[3],
+      name: (isImage ? (m[2] || "vedhæftet billede") : (m[2] || "vedhæftet fil")).slice(0, 200),
+      isImage
+    });
+    details = details.split(m[0]).join("").trim();
+  }
+  details = details.replace(/\n{3,}/g, "\n\n").trim();
+
+  return { name, deadline, details, files };
+}
+
+function cardHtml(it){
+  const info = deadlineInfo(it);
+  let badge = "", accentClass = "";
+  if (info){
+    const cls = info.isOverdue ? "overdue" : info.soon ? "soon" : "";
+    accentClass = info.isOverdue ? "accent-overdue" : info.soon ? "accent-soon" : "";
+    const label = info.isOverdue ? "Overskredet" : "Frist";
+    badge = `<span class="badge ${cls}">${label}: ${formatDate(it.deadline)}</span>`;
+  }
+  const hasFiles = Array.isArray(it.files) && it.files.length > 0;
+  const hasDetail = it.details || hasFiles;
+  const detailToggle = hasDetail
+    ? `<button type="button" class="detail-toggle" data-toggle="${it.id}" aria-expanded="false"><span class="chev">›</span> Detaljer</button>`
+    : "";
+  const fileChips = hasFiles ? it.files.map(f => `
+      <a class="detail-file" href="${escapeAttr(f.url)}" target="_blank" rel="noopener">
+        ${f.isImage ? `<img src="${escapeAttr(f.url)}" alt="">` : `<div class="file-ic">FIL</div>`}
+        <span class="fn">${escapeHtml(f.name)}</span>
+      </a>`).join("") : "";
+  const detailBody = hasDetail ? `
+    <div class="detail-body" id="detail-${it.id}">
+      <div class="detail-inner">
+        ${it.details ? `<div class="detail-text">${escapeHtml(it.details)}</div>` : ""}
+        ${fileChips}
+      </div>
+    </div>` : "";
+
+  const safeUrl = escapeAttr(it.html_url || "#");
+  return `
+    <div class="card ${it.done ? "is-done" : accentClass}">
+      <p class="card-title"><a href="${safeUrl}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a></p>
+      <div class="meta">
+        <span>Bedt af ${escapeHtml(it.requesterName)}</span>
+        <span>· oprettet ${daysAgoLabel(it.created)}</span>
+        ${badge}
+      </div>
+      <div class="row-actions">
+        ${it.done
+          ? `<a class="btn reopen-btn" href="${safeUrl}" target="_blank" rel="noopener">↺ Genåbn på GitHub</a>`
+          : `<a class="btn done-btn" href="${safeUrl}" target="_blank" rel="noopener">✓ Marker som færdig på GitHub</a>`}
+        ${detailToggle}
+      </div>
+      ${detailBody}
+    </div>`;
+}
+
+function buildExportText(open, done){
+  const lines = [];
+  lines.push("# Build tracker — Værkstedskøen");
+  lines.push(`_Eksporteret ${formatDate(new Date())}_`);
+  lines.push("");
+  lines.push(`## Åbne opgaver (${open.length}) — i prioriteret rækkefølge, mest presserende først`);
+  if (!open.length) lines.push("Ingen åbne opgaver lige nu.");
+  open.forEach((it, i) => {
+    const info = deadlineInfo(it);
+    const deadlineStr = it.deadline
+      ? (info?.isOverdue ? `OVERSKREDET frist: ${formatDate(it.deadline)}` : `frist: ${formatDate(it.deadline)}`)
+      : "ingen frist";
+    lines.push(`${i + 1}. **${it.title}** — bedt af ${it.requesterName}, oprettet ${formatDate(it.created)}, ${deadlineStr} (${it.html_url})`);
+    if (it.details) lines.push(`   Detaljer: ${it.details}`);
+  });
+  lines.push("");
+  lines.push(`## Færdige opgaver (${done.length})`);
+  if (!done.length) lines.push("Ingen afsluttet endnu.");
+  done.forEach(it => {
+    lines.push(`- **${it.title}** — bedt af ${it.requesterName}, afsluttet ${it.doneAt ? formatDate(it.doneAt) : "ukendt dato"}`);
+  });
+  return lines.join("\n");
+}
+
+let currentOpen = [], currentDone = [];
+
+function render(issues){
+  currentOpen = issues.filter(i => !i.done).sort(compareOpen);
+  currentDone = issues.filter(i => i.done)
+    .sort((a, b) => (b.doneAt || b.created) - (a.doneAt || a.created));
+
+  const overdueCount = currentOpen.filter(i => deadlineInfo(i)?.isOverdue).length;
+  statsEl.innerHTML = `
+    <span class="stat-chip"><strong>${currentOpen.length}</strong>&nbsp;åbne</span>
+    ${overdueCount ? `<span class="stat-chip warn"><strong>${overdueCount}</strong>&nbsp;overskredet</span>` : ""}
+  `;
+
+  // Ét kort der fejler under optegning må ikke tage resten af listen med sig ned.
+  function safeCardHtml(it){
+    try{ return cardHtml(it); }
+    catch(e){
+      console.error("Kunne ikke optegne kort for #" + it.id, e);
+      return `<div class="card"><p class="card-title"><a href="${escapeAttr(it.html_url || "#")}" target="_blank" rel="noopener">${escapeHtml(it.title || "(uden titel)")}</a></p></div>`;
+    }
+  }
+
+  listEl.innerHTML = currentOpen.length
+    ? currentOpen.map(safeCardHtml).join("")
+    : `<div class="empty">Ingen åbne anmodninger lige nu 🎉</div>`;
+
+  doneListEl.innerHTML = currentDone.map(safeCardHtml).join("");
+  doneSummary.textContent = `Færdige (${currentDone.length})`;
+
+  document.querySelectorAll("[data-toggle]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.toggle;
+      const body = document.getElementById("detail-" + id);
+      const isOpening = !body.style.maxHeight || body.style.maxHeight === "0px";
+      if (isOpening){
+        body.style.maxHeight = body.scrollHeight + "px";
+      } else {
+        body.style.maxHeight = "0px";
+      }
+      btn.setAttribute("aria-expanded", String(isOpening));
+    });
+  });
+}
+
+async function loadIssues(){
+  refreshBtn.classList.add("loading");
+  try{
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues?state=all&per_page=100`, {
+      headers: { "Accept": "application/vnd.github+json" }
+    });
+    if (!res.ok) throw new Error("status " + res.status);
+    const data = await res.json();
+    const issues = data
+      .filter(i => !i.pull_request)
+      .map(raw => {
+        // Én uventet/skæv anmodning må aldrig vælte hele siden — falder tilbage til
+        // "sikre" tomme værdier, hvis parseBody af en eller anden grund fejler.
+        let parsed;
+        try{
+          parsed = parseBody(raw.body, raw.user?.login || "ukendt");
+        } catch(e){
+          console.error("Kunne ikke aflæse anmodning #" + raw.number, e);
+          parsed = { name: `@${raw.user?.login || "ukendt"}`, deadline: null, details: "", files: [] };
+        }
+        const created = new Date(raw.created_at);
+        const doneAt = raw.closed_at ? new Date(raw.closed_at) : null;
+        return {
+          id: raw.number,
+          title: (raw.title && String(raw.title).trim()) || "(uden titel)",
+          html_url: raw.html_url,
+          created: isNaN(created) ? new Date() : created,
+          done: raw.state !== "open",
+          doneAt: (doneAt && !isNaN(doneAt)) ? doneAt : null,
+          requesterName: parsed.name,
+          deadline: (parsed.deadline && !isNaN(parsed.deadline)) ? parsed.deadline : null,
+          details: parsed.details,
+          files: parsed.files || []
+        };
+      });
+    render(issues);
+    statusEl.hidden = true;
+    contentEl.hidden = false;
+  } catch (err){
+    statusEl.hidden = true;
+    contentEl.hidden = true;
+    document.getElementById("status").outerHTML = `<div class="error" id="status">
+      Kunne ikke hente anmodninger lige nu.<br>
+      Tjek at OWNER/REPO er rigtigt udfyldt øverst i siden, eller se listen direkte på
+      <a href="${repoUrl}/issues" target="_blank" rel="noopener">GitHub</a>.
+    </div>`;
+    console.error(err);
+  } finally {
+    refreshBtn.classList.remove("loading");
+  }
+}
+
+refreshBtn.addEventListener("click", loadIssues);
+
+// --- Eksportér / "build tracker" ---
+const exportPanel = document.getElementById("export-panel");
+const toggleExportBtn = document.getElementById("toggle-export");
+const exportTextEl = document.getElementById("export-text");
+
+toggleExportBtn.addEventListener("click", () => {
+  const willShow = exportPanel.hidden;
+  exportPanel.hidden = !willShow;
+  toggleExportBtn.setAttribute("aria-expanded", String(willShow));
+  if (willShow){
+    exportTextEl.value = buildExportText(currentOpen, currentDone);
+    exportTextEl.focus();
+    exportTextEl.select();
+  }
+});
+document.getElementById("close-export").addEventListener("click", () => {
+  exportPanel.hidden = true;
+  toggleExportBtn.setAttribute("aria-expanded", "false");
+});
+document.getElementById("copy-export").addEventListener("click", async (e) => {
+  const btn = e.currentTarget;
+  const original = btn.textContent;
+  exportTextEl.focus();
+  exportTextEl.select();
+  try{
+    await navigator.clipboard.writeText(exportTextEl.value);
+    btn.textContent = "Kopieret ✓";
+  } catch{
+    btn.textContent = "Markeret — tryk Ctrl+C";
+  }
+  setTimeout(() => { btn.textContent = original; }, 2200);
+});
+document.getElementById("save-export").addEventListener("click", () => {
+  const blob = new Blob([exportTextEl.value], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "vaerkstedskoen-build-tracker.md";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+loadIssues();
+</script>
+</body>
+</html>
